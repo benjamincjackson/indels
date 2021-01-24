@@ -223,7 +223,7 @@ func populateDelMap(cDel chan deletionOccurrence, cDelMap chan map[int]map[int][
 	cDelMap<- delMap
 }
 
-func writeInsMap(insmap map[int]map[string][]string) error {
+func writeInsMap(outfile string, insmap map[int]map[string][]string) error {
 
 	keys := make([]int, 0, len(insmap))
 	for k := range insmap {
@@ -231,7 +231,7 @@ func writeInsMap(insmap map[int]map[string][]string) error {
 	}
 	sort.Ints(keys)
 
-	f, err := os.Create("insertions.txt")
+	f, err := os.Create(outfile)
 	if err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func writeInsMap(insmap map[int]map[string][]string) error {
 	return nil
 }
 
-func writeDelMap(delmap map[int]map[int][]string) error {
+func writeDelMap(outfile string, delmap map[int]map[int][]string) error {
 
 	keys := make([]int, 0, len(delmap))
 	for k := range delmap {
@@ -270,7 +270,7 @@ func writeDelMap(delmap map[int]map[int][]string) error {
 	}
 	sort.Ints(keys)
 
-	f, err := os.Create("deletions.txt")
+	f, err := os.Create(outfile)
 	if err != nil {
 		return err
 	}
@@ -302,10 +302,12 @@ func writeDelMap(delmap map[int]map[int][]string) error {
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		os.Stderr.WriteString("Usage: ./indels alignment.sam\n")
+	if len(os.Args) != 4 {
+		os.Stderr.WriteString("Usage: ./indels alignment.sam insertions_out.txt deletions_out.txt\n")
 	} else {
 		infile := os.Args[1]
+		ins_out := os.Args[2]
+		del_out := os.Args[3]
 
 		cErr := make(chan error)
 
@@ -343,7 +345,7 @@ func main() {
 		for n := 1; n > 0; {
 			select {
 			case err := <-cErr:
-				os.Stderr.WriteString("Usage: ./indels alignment.sam\n")
+				os.Stderr.WriteString("Usage: ./indels alignment.sam insertions_out.txt deletions_out.txt\n")
 				log.Fatal(err)
 			case <-cReadDone:
 				close(cSR)
@@ -354,7 +356,7 @@ func main() {
 		for n := 1; n > 0; {
 			select {
 			case err := <-cErr:
-				os.Stderr.WriteString("Usage: ./indels alignment.sam\n")
+				os.Stderr.WriteString("Usage: ./indels alignment.sam insertions_out.txt deletions_out.txt\n")
 				log.Fatal(err)
 			case <-cInDelsDone:
 				close(cIns)
@@ -369,7 +371,7 @@ func main() {
 		for n := 2; n > 0; {
 			select {
 			case err := <-cErr:
-				os.Stderr.WriteString("Usage: ./indels alignment.sam\n")
+				os.Stderr.WriteString("Usage: ./indels alignment.sam insertions_out.txt deletions_out.txt\n")
 				log.Fatal(err)
 			case insertionmap = <-cInsMap:
 				// close(cInsMap)
@@ -380,15 +382,15 @@ func main() {
 			}
 		}
 
-		err := writeInsMap(insertionmap)
+		err := writeInsMap(ins_out, insertionmap)
 		if err != nil {
-			os.Stderr.WriteString("Usage: ./indels alignment.sam\n")
+			os.Stderr.WriteString("Usage: ./indels alignment.sam insertions_out.txt deletions_out.txt\n")
 			log.Fatal(err)
 		}
 
-		err = writeDelMap(deletionmap)
+		err = writeDelMap(del_out, deletionmap)
 		if err != nil {
-			os.Stderr.WriteString("Usage: ./indels alignment.sam\n")
+			os.Stderr.WriteString("Usage: ./indels alignment.sam insertions_out.txt deletions_out.txt\n")
 			log.Fatal(err)
 		}
 	}

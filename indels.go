@@ -96,6 +96,9 @@ func getSamRecords(infile string, chnl chan biogosam.Record, cdone chan bool, ce
 			cerr<- err
 
 		} else {
+			if rec.Pos < 0 {
+				continue
+			}
 
 			chnl<- *rec
 
